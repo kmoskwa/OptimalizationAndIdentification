@@ -4,29 +4,63 @@ clc
 close all
 clear all
 
-func = @(x) 4*x(1)^3+x(2)^2+10;
-%func = @(x) x(1) + x(2);
-singleSteps = true;
-data.func = @(x) x(1) + x(2);c = 10;
-%data.func = @(x,y) sin(x) + cos(y);
-%data.func = @(x, y) 4*x^3 + y^2 + 10;
-data.spaceXFrom   = -6;
-data.spaceXTo     =  6;
-data.spaceYFrom   =  data.spaceXFrom;
-data.spaceYTo     =  data.spaceXTo;
-data.spaceZFrom   = -1000;
-data.spaceZTo     =  1000;
-data.resolution   =  100;
-data.contourLines =  120;
+func1 = @(x) x(1)^2 + x(2)^2;
+func2 = @(x) exp(x(1))*(4*x(1)^2 + 2*x(2)^2 + 4*x(1)*x(2) + 2 * x(1) + 1);
+func3 = @(x) 100 * (x(2) - x(1)^2)^2 + (1-x(1))^2;
+func4 = @(x) sin(x(1)) + cos(x(2));
+func = func1;
+startPoint = [5, 5];
+step = [2.2, 2.2];
+pauses = 0;
+degree = 2
+reqMin = 1.0E-20;
+convGe = 1.0E-01;
+countLimit = 1000;
 
-data.spaceX = linspace(data.spaceXFrom, data.spaceXTo, data.resolution);
-data.spaceY = linspace(data.spaceYFrom, data.spaceYTo, data.resolution);
-data.spaceZ = linspace(data.spaceZFrom, data.spaceZTo, data.resolution);
+drawFunc(func, 100, 120, -8, 8, -8, 8, -10000, 10000);
+hold;
 
-%calculate function values
-for i = 1:data.resolution
-    for j = 1:data.resolution
-        data.value(j, i) = feval(func,[data.spaceX(i), data.spaceY(j)]);
+[xMin, vNewLo, iterations] = simplex (func, degree, startPoint, reqMin, step, convGe, countLimit, pauses);
+%pause;
+disp('Finished');
+disp(['iterations: ', num2str(iterations)]);
+disp(['xMin: ', num2str(xMin), ' = ', num2str(vNewLo)]);
+return;
+
+    function drawFunc(func, resolution, contourLines, minX, maxX, minY, maxY, minZ, maxZ)
+        spaceX = linspace(minX, maxX, resolution);
+        spaceY = linspace(minY, maxY, resolution);
+        minval = 0;
+        maxval = 0;
+        for i = 1:resolution
+            for j = 1:resolution
+                val = feval(func,[spaceX(i), spaceY(j)]);
+                minval = min(val, minval);
+                maxval = max(val, maxval);
+                value(j, i) = val;
+            end
+        end
+        minZ   = minval * 2;
+        maxZ   = maxval * 2;
+        spaceZ = linspace(minZ, maxZ, resolution);
+        
+        figure;
+        contour(spaceX, spaceY, value, spaceZ);
+    end
+
+    function checkPause(isPauseEnabled)
+        if (isPauseEnabled == 1)
+            pause;
+        end
+    end
+
+    function drawSimplex(simplex, color, pauses, text)
+        title(text);
+        plot(simplex(1, [1 2]), simplex(2, [1 2]), color);
+        plot(simplex(1, [2 3]), simplex(2, [2 3]), color);
+        plot(simplex(1, [3 1]), simplex(2, [3 1]), color);
+        checkPause(pauses);
+        drawnow;
     end
 
     function displayCurrent(xBar, pointNo, point, value, type)
