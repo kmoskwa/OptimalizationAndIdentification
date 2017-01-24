@@ -1,4 +1,4 @@
-close all; clear all; clc
+close all; clear all; clc;
 
 %Constraints
 B1price = 1;
